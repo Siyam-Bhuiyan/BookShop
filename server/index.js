@@ -1,11 +1,11 @@
 const express = require("express");
-const app = express();
-const port = process.env.PORT || 3000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
-require("dotenv").config();
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
+require("dotenv").config();
+const port = process.env.PORT || 3000;
 
-//middleware
+const app = express();
+
 app.use(cors());
 app.use(express.json());
 
@@ -28,25 +28,17 @@ async function run() {
 
     //create db and collections
     const db = client.db("BOOKSHOP");
-    const boooksCollection = db.collection("books");
+    const booksCollection = db.collection("books");
 
     //create a new book(post)
     app.post("/books", async (req, res) => {
-      const bookData = req.body;
-      console.log(bookData);
-      try {
-        const result = await boooksCollection.insertOne(bookData);
-        res.send({
-          success: true,
-          message: "Book added successfully",
-        });
-      } catch (error) {
-        res.status(500).send({
-          success: false,
-          message: error.message,
-        });
-      }
-    });
+        try {
+          const book = await booksCollection.insertOne(req.body);
+          res.status(201).json(book);
+        } catch (err) {
+          res.status(500).json({ error: err.message });
+        }
+      });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
