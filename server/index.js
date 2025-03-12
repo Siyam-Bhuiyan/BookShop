@@ -1,6 +1,7 @@
 const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
+const { parse } = require("dotenv");
 require("dotenv").config();
 const port = process.env.PORT || 3000;
 
@@ -32,13 +33,63 @@ async function run() {
 
     //create a new book(post)
     app.post("/books", async (req, res) => {
+        const bookData = req.body;
         try {
-          const book = await booksCollection.insertOne(req.body);
-          res.status(201).json(book);
-        } catch (err) {
-          res.status(500).json({ error: err.message });
+            const book = await booksCollection.insertOne(bookData);
+            res.status(201).json({message: "Book created successfully"});
+        } catch (error) {
+            res.status(400).json({ message: "Error creating book" });
         }
       });
+
+    //get all books
+    app.get("/books", async (req, res) => {
+        const  {page, limit, genre, minYear, maxYear, author, minPrice, maxPrice, sortBy, order, search} = req.query;
+        try {
+            const currentPage = Math.max(1, parseInt(page) || 1);
+            const perPage = parseInt(limit) || 10;
+            const skip = (currentPage - 1) * perPage;
+            const filter = {};
+
+            if(search) {
+                filter.$or = [
+                    {title: {$regex: search, $options: 'i'}},
+                    {desctiprion: {$regex: search, $options: 'i'}},
+                ]
+            }
+
+            if(genre) filter.genre = genre;
+            if(minYear || maxYear) {
+                filter.publishYear = {
+                    ...filter(minYear && { $gte: parseInt(minYear) }),
+                    ...filter(maxYear && { $lte: parseInt(maxYear) })
+                };
+            }
+            if(author) filter.author = author;
+            if(minPrice || maxPrice) {
+                filter.price = {
+                    ...filter(minPrice && { $gte: parseInt(minPrice) }),
+                    ...filter(maxPrice && { $lte: parseInt(maxPrice) })
+                };
+            }
+
+            const sortOptions = { [sortBy || "title"]: order === "desc" ? -1 : 1 };
+
+
+            const books = await booksCollection.find(filter).sort(sortOptions).skip(skip).limit(perPage).toArray();
+
+            const [] = await Promise.all([
+                booksCollection.find(filter).sort(sortOptions).skip(skip).limit(perPage).
+                booksCollection.distinct("genre"),
+                booksCollection.distinct("author")
+            ]);
+
+            res.status(201).json(books);
+        } catch (error) {
+            res.status(500).json({ message: "Error fetching books" });
+        } 
+
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
