@@ -1,13 +1,13 @@
-const express = require('express')
-const app = express()
-const port = process.env.PORT||3000
-const { MongoClient, ServerApiVersion } = require('mongodb');
-require('dotenv').config()
-const cors = require('cors')
+const express = require("express");
+const app = express();
+const port = process.env.PORT || 3000;
+const { MongoClient, ServerApiVersion } = require("mongodb");
+require("dotenv").config();
+const cors = require("cors");
 
 //middleware
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
 //connect mongodb
 const uri = process.env.MONGODB_URL;
@@ -18,7 +18,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -31,26 +31,28 @@ async function run() {
     const boooksCollection = db.collection("books");
 
     //create a new book(post)
-    app.post('/books', async (req, res) => {
-        const bookData = req.body;
-        console.log(bookData);
-        try {
-            const result = await boooksCollection.insertOne(bookData);
-            res.send({
-                success: true,
-                message: 'Book added successfully'
-            });
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message
-            });
-        }
+    app.post("/books", async (req, res) => {
+      const bookData = req.body;
+      console.log(bookData);
+      try {
+        const result = await boooksCollection.insertOne(bookData);
+        res.send({
+          success: true,
+          message: "Book added successfully",
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
     });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -58,13 +60,13 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.get('/', (req, res) => {
-  res.send('Welcome to Book Management API')
-})
+app.get("/", (req, res) => {
+  res.send("Welcome to Book Management API");
+});
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+  console.log(`Example app listening on port ${port}`);
+});
 
 //admin
 //5RF4kIyTygr6Fi4N
